@@ -8,6 +8,8 @@ Requires:
 from pdf2image import convert_from_path
 from PIL import Image
 import pytesseract
+import subprocess
+import os
 from config import TESSERACT_PATH, POPPLER_PATH
 from pathlib import Path
 
@@ -23,7 +25,6 @@ class OCRError(Exception):
 
 def _check_tesseract():
     """Verify Tesseract is available."""
-    import os
     
     # Check if we're on Streamlit Cloud (where OCR isn't available)
     if os.environ.get("STREAMLIT_SERVER_ENVIRONMENT") == "cloud":
@@ -76,7 +77,6 @@ def _check_tesseract():
     
     # Verify Tesseract is actually executable (optional check)
     try:
-        import subprocess
         test_path = actual_path or TESSERACT_PATH
         result = subprocess.run(
             [test_path, "--version"],
