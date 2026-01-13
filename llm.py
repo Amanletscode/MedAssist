@@ -6,11 +6,16 @@ load_dotenv()
 # Simple, guaranteed working approach for API key loading
 def get_groq_key():
     """Get GROQ API key - Streamlit secrets first, then environment variable."""
+    # Try Streamlit secrets first (for Streamlit Cloud)
     try:
         import streamlit as st
-        return st.secrets["GROQ_API_KEY"]
-    except Exception:
-        return os.getenv("GROQ_API_KEY", "")
+        if hasattr(st, 'secrets') and "GROQ_API_KEY" in st.secrets:
+            return st.secrets["GROQ_API_KEY"]
+    except (KeyError, AttributeError, Exception):
+        pass
+    
+    # Fall back to environment variable (from .env file or system env)
+    return os.getenv("GROQ_API_KEY", "")
 
 API_KEY = get_groq_key()
 
