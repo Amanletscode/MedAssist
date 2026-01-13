@@ -4,6 +4,17 @@ import streamlit as st
 # This must come before importing modules that might use Streamlit
 st.set_page_config(page_title="MedAssist AI", layout="wide")
 
+# Debug: Verify secrets are accessible (remove after confirming it works)
+with st.sidebar.expander("🔧 Debug Secrets", expanded=False):
+    try:
+        st.write("Secrets keys:", list(st.secrets.keys()) if hasattr(st, 'secrets') else "Not available")
+        st.write("Has GROQ_API_KEY:", "GROQ_API_KEY" in st.secrets if hasattr(st, 'secrets') else False)
+        if hasattr(st, 'secrets') and "GROQ_API_KEY" in st.secrets:
+            key_preview = str(st.secrets["GROQ_API_KEY"])[:15] + "..." if st.secrets["GROQ_API_KEY"] else "Empty"
+            st.write("Key preview:", key_preview)
+    except Exception as e:
+        st.write(f"Error checking secrets: {e}")
+
 # Now safe to import other modules
 from llm import LLMClient, LLMError
 from ocr import pdf_to_text, image_to_text, OCRError
@@ -21,30 +32,7 @@ def get_llm_client():
     try:
         return LLMClient()
     except LLMError as e:
-        # Show detailed error for debugging
-        error_msg = str(e)
-        st.error(f"LLM initialization failed: {error_msg}")
-        
-        # Debug info (only show in sidebar for troubleshooting)
-        with st.sidebar.expander("🔧 Debug Info", expanded=False):
-            try:
-                has_secrets = hasattr(st, 'secrets')
-                st.write(f"Streamlit secrets available: {has_secrets}")
-                if has_secrets:
-                    try:
-                        if "GROQ_API_KEY" in st.secrets:
-                            key_present = "✅ Found"
-                            key_preview = str(st.secrets["GROQ_API_KEY"])[:10] + "..." if st.secrets["GROQ_API_KEY"] else "Empty"
-                        else:
-                            key_present = "❌ Not found"
-                            key_preview = "N/A"
-                        st.write(f"GROQ_API_KEY in secrets: {key_present}")
-                        st.write(f"Key preview: {key_preview}")
-                    except Exception as debug_e:
-                        st.write(f"Error accessing secrets: {debug_e}")
-            except Exception:
-                pass
-        
+        st.error(f"LLM initialization failed: {e}")
         return None
 
 llm = get_llm_client()

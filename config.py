@@ -53,7 +53,8 @@ def _get_from_streamlit_secrets(key: str, default: str = "") -> str:
         return default
 
 # Load .env file if it exists (for local development)
-_env_path = Path(__file__).parent / ".env"
+# Use project root, not config.py's directory
+_env_path = Path(".env")
 if _env_path.exists():
     try:
         from dotenv import load_dotenv
@@ -67,19 +68,17 @@ if _env_path.exists():
                     key, _, value = line.partition("=")
                     os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
-# API Keys - Priority: Streamlit secrets > env vars > .env file
-# Use lazy evaluation - don't access secrets at import time
+# API Keys - Don't compute at import time, use function instead
+# This avoids issues with Streamlit secrets not being ready at import time
 def get_groq_api_key():
-    """Get GROQ_API_KEY with proper priority (lazy evaluation at runtime)."""
-    # Try Streamlit secrets first (only works at runtime, not import time)
-    secret_value = _get_from_streamlit_secrets("GROQ_API_KEY")
-    if secret_value:
-        return secret_value
-    # Fall back to environment variable
-    return os.environ.get("GROQ_API_KEY", "")
+    """Get GROQ_API_KEY - Streamlit secrets first, then environment variable."""
+    try:
+        import streamlit as st
+        return st.secrets["GROQ_API_KEY"]
+    except Exception:
+        return os.environ.get("GROQ_API_KEY", "")
 
-# For backward compatibility, but this will be empty at import time
-# The actual key should be retrieved via get_groq_api_key() at runtime
+# Keep for backward compatibility, but prefer using get_groq_api_key()
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 # External tool paths - Update these for your system or set via environment
