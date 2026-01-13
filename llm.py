@@ -1,23 +1,41 @@
 import os
 from dotenv import load_dotenv
-from config import GROQ_API_KEY
+from config import get_groq_api_key
 
 load_dotenv()
 
 # Handle API keys (priority: Streamlit secrets > env var > config.py)
 # This ensures Streamlit Cloud secrets take precedence
-# Use lazy evaluation to avoid accessing st.secrets before Streamlit is initialized
+# Use lazy evaluation - access secrets at runtime, not import time
 def _get_api_key():
-    """Get API key with proper priority (lazy evaluation)."""
+    """Get API key with proper priority (lazy evaluation at runtime)."""
+    # Priority 1: Streamlit secrets (for Streamlit Cloud)
     try:
         import streamlit as st
-        if hasattr(st, 'secrets'):
-            return st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY") or GROQ_API_KEY
-    except Exception:
+        # Try to access secrets - this works at runtime after Streamlit is initialized
+        try:
+            # Method 1: Try direct access
+            if hasattr(st, 'secrets') and st.secrets:
+                secret_value = st.secrets.get("GROQ_API_KEY", "")
+                if secret_value:
+                    return secret_value
+        except (AttributeError, RuntimeError, KeyError, Exception) as e:
+            # Secrets not available or key doesn't exist
+            pass
+    except (ImportError, Exception):
+        # Streamlit not available
         pass
-    return os.environ.get("GROQ_API_KEY") or GROQ_API_KEY
+    
+    # Priority 2: Environment variable
+    env_value = os.environ.get("GROQ_API_KEY", "")
+    if env_value:
+        return env_value
+    
+    # Priority 3: Config fallback
+    return get_groq_api_key()
 
-API_KEY = _get_api_key()
+# Don't evaluate at import time - will be set when actually needed
+API_KEY = None
 
 # Best Groq Model
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
@@ -37,14 +55,16 @@ class LLMClient:
     def client(self):
         """Lazy initialization of Groq client."""
         if self._client is None:
-            if not API_KEY:
+            # Get API key at runtime (not import time) to access Streamlit secrets
+            api_key = _get_api_key()
+            if not api_key:
                 raise LLMError(
                     "GROQ_API_KEY not configured. "
-                    "Set it via environment variable or .env file."
+                    "Set it via Streamlit secrets, environment variable, or .env file."
                 )
             try:
                 from groq import Groq
-                self._client = Groq(api_key=API_KEY)
+                self._client = Groq(api_key=api_key)
             except ImportError:
                 raise LLMError("groq package not installed. Run: pip install groq")
         return self._client

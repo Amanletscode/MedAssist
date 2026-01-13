@@ -55,19 +55,19 @@ if _env_path.exists():
                     os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 # API Keys - Priority: Streamlit secrets > env vars > .env file
-# Use lazy evaluation to avoid accessing st.secrets before st.set_page_config()
-def _get_groq_api_key():
-    """Get GROQ_API_KEY with proper priority (lazy evaluation)."""
-    return _get_from_streamlit_secrets("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY", "")
+# Use lazy evaluation - don't access secrets at import time
+def get_groq_api_key():
+    """Get GROQ_API_KEY with proper priority (lazy evaluation at runtime)."""
+    # Try Streamlit secrets first (only works at runtime, not import time)
+    secret_value = _get_from_streamlit_secrets("GROQ_API_KEY")
+    if secret_value:
+        return secret_value
+    # Fall back to environment variable
+    return os.environ.get("GROQ_API_KEY", "")
 
-GROQ_API_KEY = _get_groq_api_key()
-if not GROQ_API_KEY:
-    import warnings
-    warnings.warn(
-        "GROQ_API_KEY not set! Set it via Streamlit secrets, environment variable, or .env file. "
-        "LLM features will not work without it.",
-        UserWarning
-    )
+# For backward compatibility, but this will be empty at import time
+# The actual key should be retrieved via get_groq_api_key() at runtime
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 # External tool paths - Update these for your system or set via environment
 # Note: These are only needed for local development. Streamlit Cloud doesn't support OCR.

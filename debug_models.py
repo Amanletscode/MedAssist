@@ -1,7 +1,12 @@
 from groq import Groq
-from config import GROQ_API_KEY
+from config import get_groq_api_key
 
-client = Groq(api_key=GROQ_API_KEY)
+# Get API key at runtime
+api_key = get_groq_api_key()
+if not api_key:
+    raise ValueError("GROQ_API_KEY not configured. Set it via Streamlit secrets, environment variable, or .env file.")
+
+client = Groq(api_key=api_key)
 
 resp = client.models.list()
 
