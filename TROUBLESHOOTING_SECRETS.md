@@ -10,14 +10,14 @@ In Streamlit Cloud → Settings → Secrets, make sure your secrets file looks *
 
 ```toml
 [secrets]
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "your_groq_api_key_here"
 ```
 
 ### ❌ Wrong Formats (These Won't Work):
 
 ```
-GROQ_API_KEY="gsk_..."           # Missing [secrets] header
-GROQ_API_KEY = gsk_...          # Missing quotes
+GROQ_API_KEY="your_key"           # Missing [secrets] header
+GROQ_API_KEY = your_key          # Missing quotes
 [secrets] GROQ_API_KEY = "..."  # Wrong syntax
 ```
 
@@ -25,7 +25,7 @@ GROQ_API_KEY = gsk_...          # Missing quotes
 
 ```toml
 [secrets]
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "your_groq_api_key_here"
 ```
 
 ## 📝 Steps to Fix
