@@ -33,7 +33,20 @@ def _get_from_streamlit_secrets(key: str, default: str = "") -> str:
         # Check if Streamlit runtime is available and initialized
         # This avoids errors if called before st.set_page_config()
         if hasattr(st, 'secrets'):
-            return st.secrets.get(key, default)
+            # Try dictionary-style access (preferred)
+            try:
+                if key in st.secrets:
+                    value = st.secrets[key]
+                    return str(value).strip() if value else default
+            except (KeyError, TypeError):
+                pass
+            # Try attribute-style access as fallback
+            try:
+                if hasattr(st.secrets, key):
+                    value = getattr(st.secrets, key)
+                    return str(value).strip() if value else default
+            except (AttributeError, TypeError):
+                pass
         return default
     except (AttributeError, RuntimeError, Exception):
         # Streamlit not initialized yet, or secrets not configured, or key doesn't exist

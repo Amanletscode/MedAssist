@@ -12,14 +12,20 @@ def _get_api_key():
     # Priority 1: Streamlit secrets (for Streamlit Cloud)
     try:
         import streamlit as st
-        # Try to access secrets - this works at runtime after Streamlit is initialized
+        # Access secrets using proper Streamlit syntax
         try:
-            # Method 1: Try direct access
-            if hasattr(st, 'secrets') and st.secrets:
-                secret_value = st.secrets.get("GROQ_API_KEY", "")
-                if secret_value:
-                    return secret_value
-        except (AttributeError, RuntimeError, KeyError, Exception) as e:
+            if hasattr(st, 'secrets'):
+                # Try dictionary-style access first
+                if "GROQ_API_KEY" in st.secrets:
+                    secret_value = st.secrets["GROQ_API_KEY"]
+                    if secret_value:
+                        return str(secret_value).strip()
+                # Try attribute-style access as fallback
+                if hasattr(st.secrets, 'GROQ_API_KEY'):
+                    secret_value = st.secrets.GROQ_API_KEY
+                    if secret_value:
+                        return str(secret_value).strip()
+        except (AttributeError, RuntimeError, KeyError, TypeError) as e:
             # Secrets not available or key doesn't exist
             pass
     except (ImportError, Exception):

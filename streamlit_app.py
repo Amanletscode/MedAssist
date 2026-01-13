@@ -21,7 +21,30 @@ def get_llm_client():
     try:
         return LLMClient()
     except LLMError as e:
-        st.error(f"LLM initialization failed: {e}")
+        # Show detailed error for debugging
+        error_msg = str(e)
+        st.error(f"LLM initialization failed: {error_msg}")
+        
+        # Debug info (only show in sidebar for troubleshooting)
+        with st.sidebar.expander("🔧 Debug Info", expanded=False):
+            try:
+                has_secrets = hasattr(st, 'secrets')
+                st.write(f"Streamlit secrets available: {has_secrets}")
+                if has_secrets:
+                    try:
+                        if "GROQ_API_KEY" in st.secrets:
+                            key_present = "✅ Found"
+                            key_preview = str(st.secrets["GROQ_API_KEY"])[:10] + "..." if st.secrets["GROQ_API_KEY"] else "Empty"
+                        else:
+                            key_present = "❌ Not found"
+                            key_preview = "N/A"
+                        st.write(f"GROQ_API_KEY in secrets: {key_present}")
+                        st.write(f"Key preview: {key_preview}")
+                    except Exception as debug_e:
+                        st.write(f"Error accessing secrets: {debug_e}")
+            except Exception:
+                pass
+        
         return None
 
 llm = get_llm_client()
