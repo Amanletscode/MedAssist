@@ -23,15 +23,30 @@ class OCRError(Exception):
     pass
 
 
+def _is_streamlit_cloud():
+    """Detect if running on Streamlit Cloud."""
+    # Multiple ways to detect Streamlit Cloud
+    if os.environ.get("STREAMLIT_SERVER_ENVIRONMENT") == "cloud":
+        return True
+    # Check for Streamlit Cloud hostname
+    if "streamlit.app" in os.environ.get("HOSTNAME", ""):
+        return True
+    # Check if we're on Linux (Streamlit Cloud runs on Linux, not Windows)
+    # and the path is a Windows path (indicates misconfiguration)
+    if os.name != 'nt' and ('\\' in TESSERACT_PATH or TESSERACT_PATH.startswith('C:')):
+        return True
+    return False
+
 def _check_tesseract():
     """Verify Tesseract is available."""
     
     # Check if we're on Streamlit Cloud (where OCR isn't available)
-    if os.environ.get("STREAMLIT_SERVER_ENVIRONMENT") == "cloud":
+    if _is_streamlit_cloud():
         raise OCRError(
             "OCR is not available on Streamlit Cloud. "
             "Tesseract and Poppler require local installation. "
-            "Please use OCR features in local development only."
+            "Please use OCR features in local development only. "
+            "All other features (Chat, Code Suggestion, Claim Generator) work on Streamlit Cloud."
         )
     
     # Ensure pytesseract is configured with the correct path
@@ -62,6 +77,15 @@ def _check_tesseract():
                 pass
     
     if not path_exists:
+        # Check again if we're on Streamlit Cloud (in case detection failed earlier)
+        if _is_streamlit_cloud():
+            raise OCRError(
+                "OCR is not available on Streamlit Cloud. "
+                "Tesseract and Poppler require local installation. "
+                "Please use OCR features in local development only."
+            )
+        
+        # Local development error
         raise OCRError(
             f"Tesseract not found at: {TESSERACT_PATH}\n"
             f"Please verify the path is correct.\n"
