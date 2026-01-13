@@ -1,0 +1,27 @@
+# Web framework
+streamlit>=1.28.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# LLM clients
+groq>=0.4.0
+
+# Image processing & OCR
+Pillow>=10.0.0
+pdf2image>=1.16.0
+pytesseract>=0.3.10
+
+# Text matching
+rapidfuzz>=3.0.0
+
+# PDF generation
+reportlab>=4.0.0
+
+# Embeddings & ML
+sentence-transformers>=2.2.0
+numpy>=1.24.0
+torch>=2.0.0
+
+# Progress bars
+tqdm>=4.65.0
