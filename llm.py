@@ -4,20 +4,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Simple, guaranteed working approach for API key loading
+# IMPORTANT: Don't call this at import time - call it when actually needed
 def get_groq_key():
     """Get GROQ API key - Streamlit secrets first, then environment variable."""
     # Try Streamlit secrets first (for Streamlit Cloud)
+    # This MUST be called at runtime, not import time
     try:
         import streamlit as st
-        if hasattr(st, 'secrets') and "GROQ_API_KEY" in st.secrets:
-            return st.secrets["GROQ_API_KEY"]
+        # Direct access - this works on Streamlit Cloud at runtime
+        return st.secrets["GROQ_API_KEY"]
     except (KeyError, AttributeError, Exception):
-        pass
-    
-    # Fall back to environment variable (from .env file or system env)
-    return os.getenv("GROQ_API_KEY", "")
+        # Fall back to environment variable (from .env file or system env)
+        return os.getenv("GROQ_API_KEY", "")
 
-API_KEY = get_groq_key()
+# Don't evaluate at import time - will be called when LLM client is used
+API_KEY = None
 
 # Best Groq Model
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
@@ -37,13 +38,15 @@ class LLMClient:
     def client(self):
         """Lazy initialization of Groq client."""
         if self._client is None:
-            if not API_KEY:
+            # Get API key at runtime (not import time) - this ensures Streamlit secrets are available
+            api_key = get_groq_key()
+            if not api_key:
                 raise LLMError(
                     "GROQ_API_KEY missing. Add it in Streamlit secrets or set as environment variable."
                 )
             try:
                 from groq import Groq
-                self._client = Groq(api_key=API_KEY)
+                self._client = Groq(api_key=api_key)
             except ImportError:
                 raise LLMError("groq package not installed. Run: pip install groq")
         return self._client
