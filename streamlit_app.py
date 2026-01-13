@@ -224,6 +224,12 @@ elif page == "Upload & OCR":
         st.caption("Upload a scanned document to extract text using OCR.")
 
     uploaded = st.file_uploader("Upload PDF or Image", type=["pdf", "png", "jpg", "jpeg"], disabled=is_streamlit_cloud)
+    
+    # Prevent OCR usage on Streamlit Cloud
+    if uploaded and is_streamlit_cloud:
+        st.error("❌ OCR is not available on Streamlit Cloud. Please run the app locally to use OCR features.")
+        st.stop()
+    
     if uploaded and not is_streamlit_cloud:
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded.name)[1]) as tmp:
             tmp.write(uploaded.read())
